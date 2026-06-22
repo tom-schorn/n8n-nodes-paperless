@@ -1,4 +1,8 @@
 Copyright 2022 n8n
+Copyright 2026 Tom Schorn
+
+This project is a fork of chezmoi-sh/n8n-nodes-paperless and includes
+modifications by Tom Schorn. Original work licensed under the MIT License.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in

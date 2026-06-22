@@ -1,5 +1,5 @@
 {
-	"name": "@n8n-chezmoi-sh/n8n-nodes-paperless",
+	"name": "@tom-schorn/n8n-nodes-paperless",
 	"version": "0.1.2",
 	"description": "N8N community node manage your documents with Paperless-ngx.",
 	"keywords": [
@@ -8,14 +8,20 @@
 		"paperless-ngx"
 	],
 	"license": "MIT",
-	"homepage": "https://github.com/chezmoi-sh/n8n-nodes-paperless-ngx#readme",
+	"homepage": "https://github.com/tom-schorn/n8n-nodes-paperless#readme",
 	"author": {
-		"name": "Alexandre NICOLAIE",
-		"email": "xunleii@users.noreply.github.com"
+		"name": "Tom Schorn",
+		"email": "tom-schorn@users.noreply.github.com"
 	},
+	"contributors": [
+		{
+			"name": "Alexandre NICOLAIE",
+			"email": "xunleii@users.noreply.github.com"
+		}
+	],
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/chezmoi-sh/n8n-nodes-paperless-ngx.git"
+		"url": "https://github.com/tom-schorn/n8n-nodes-paperless.git"
 	},
 	"engines": {
 		"node": ">=18.10",
@@ -63,6 +69,6 @@
 		"form-data": "^4.0.1"
 	},
 	"bugs": {
-		"url": "https://github.com/chezmoi-sh/n8n-nodes-paperless-ngx/issues"
+		"url": "https://github.com/tom-schorn/n8n-nodes-paperless/issues"
 	}
 }

@@ -18,6 +18,9 @@ This is a n8n community node. It lets you use [Paperless-ngx](https://docs.paper
 
 Paperless-ngx is a document management system that transforms your physical documents into a searchable online archive so you can keep your paper documents, but lose the cabinet.
 
+> [!NOTE]
+> This is an actively maintained fork of [chezmoi-sh/n8n-nodes-paperless](https://github.com/chezmoi-sh/n8n-nodes-paperless), continuing development with bug fixes and additional features. Licensed under MIT.
+
 [Installation](#installation)  
 [Operations](#operations)  
 [Credentials](#credentials)  
@@ -116,4 +119,4 @@ Requires n8n version 1.0.0 or later and Paperless-ngx version 2.14.0 or later. E
 
 ## License
 
-[MIT](https://github.com/n8n-io/n8n-nodes-starter/blob/master/LICENSE.md)
+[MIT](./LICENSE.md)
