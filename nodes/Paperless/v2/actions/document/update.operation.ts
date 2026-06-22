@@ -347,7 +347,12 @@ export async function execute(
 
 	const updateFields = this.getNodeParameter('update_fields', itemIndex, {}) as any;
 
-	let tags = updateFields.tags?.values.map((tag: any) => Number(tag.tag.value));
+	let tags: number[] | undefined;
+	if (Array.isArray(updateFields.tags)) {
+		tags = (updateFields.tags as unknown[]).map(Number);
+	} else if (updateFields.tags?.values) {
+		tags = updateFields.tags.values.map((tag: any) => Number(tag.tag.value));
+	}
 
 	if (updateFields.append_tags && tags && tags.length > 0) {
 		const currentDocument = (await apiRequest.call(this, itemIndex, 'GET', endpoint)) as any;
