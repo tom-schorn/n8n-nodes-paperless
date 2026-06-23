@@ -1,6 +1,6 @@
 {
 	"name": "@tom-schorn/n8n-nodes-paperless",
-	"version": "0.1.3",
+	"version": "0.2.0-dev.0",
 	"description": "N8N community node manage your documents with Paperless-ngx.",
 	"keywords": [
 		"n8n-community-node-package",
