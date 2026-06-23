@@ -344,3 +344,8 @@ $RECYCLE.BIN/
 .pnpm-store/
 
 # End of https://www.toptal.com/developers/gitignore/api/linux,windows,macos,node,yarn,visualstudiocode,jetbrains+all
+
+# Claude (chezmoi-managed, never in project git)
+.claude/
+CLAUDE.md
+CLAUDE.local.md
