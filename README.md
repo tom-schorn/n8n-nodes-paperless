@@ -7,7 +7,7 @@
 <!-- trunk-ignore-begin(markdownlint/MD033) -->
 <div align="center">
 	<img 
-		src="https://raw.githubusercontent.com/chezmoi-sh/n8n-nodes-paperless/refs/heads/main/nodes/Paperless/v2/paperless-ngx.svg"
+		src="https://raw.githubusercontent.com/tom-schorn/n8n-nodes-paperless/main/nodes/Paperless/v2/paperless-ngx.svg"
 		alt="Paperless Icon"
 		height="50px"
 	>
@@ -19,12 +19,17 @@ This is a n8n community node. It lets you use [Paperless-ngx](https://docs.paper
 Paperless-ngx is a document management system that transforms your physical documents into a searchable online archive so you can keep your paper documents, but lose the cabinet.
 
 > [!NOTE]
-> This is an actively maintained fork of [chezmoi-sh/n8n-nodes-paperless](https://github.com/chezmoi-sh/n8n-nodes-paperless), continuing development with bug fixes and additional features. Licensed under MIT.
+> This is an actively maintained fork of [chezmoi-sh/n8n-nodes-paperless](https://github.com/chezmoi-sh/n8n-nodes-paperless)
+> (upstream is no longer maintained). It is **continuously improved** with bug fixes and new
+> features. Detailed usage docs and capabilities live in the
+> **[GitHub Wiki](https://github.com/tom-schorn/n8n-nodes-paperless/wiki)**. Licensed under MIT.
 
 [Installation](#installation)  
 [Operations](#operations)  
 [Credentials](#credentials)  
 [Compatibility](#compatibility)  
+[Documentation](#documentation)  
+[Contributing & Contact](#contributing--contact)  
 [Resources](#resources)
 
 ## Installation
@@ -110,6 +115,19 @@ To get your API token:
 ## Compatibility
 
 Requires n8n version 1.0.0 or later and Paperless-ngx version 2.14.0 or later. Earlier versions may work but are not officially supported or tested.
+
+## Documentation
+
+Full usage docs, recipes and capabilities live in the
+**[GitHub Wiki](https://github.com/tom-schorn/n8n-nodes-paperless/wiki)**. It grows
+alongside the node, so check back as new features land.
+
+## Contributing & Contact
+
+This is a fork that is **actively and continuously improved**. Contributions and ideas are welcome:
+
+- 🐛 **Bugs & feature requests** → open an [issue](https://github.com/tom-schorn/n8n-nodes-paperless/issues).
+- 💬 **Direct contact** → [tom-schorn.de](https://tom-schorn.de).
 
 ## Resources
 
