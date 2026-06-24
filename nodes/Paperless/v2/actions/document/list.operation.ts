@@ -7,83 +7,13 @@ import {
 } from 'n8n-workflow';
 import { apiRequest, apiRequestPaginated } from '../../transport';
 
-const tagResourceLocator: INodeProperties = {
-	displayName: 'Tag',
-	name: 'tag',
-	default: { mode: 'list', value: '' },
-	description: 'The tag ID',
-	modes: [
-		{
-			displayName: 'From List',
-			name: 'list',
-			placeholder: 'Select a Tag...',
-			type: 'list',
-			typeOptions: {
-				searchListMethod: 'tagSearch',
-				searchFilterRequired: false,
-				searchable: true,
-			},
-		},
-		{
-			displayName: 'By ID',
-			name: 'id',
-			placeholder: 'Enter Tag ID...',
-			type: 'string',
-			validation: [
-				{
-					type: 'regex',
-					properties: {
-						regex: '^[1-9][0-9]*$',
-						errorMessage: 'The ID must be a positive integer',
-					},
-				},
-			],
-		},
-	],
-	type: 'resourceLocator',
-};
-
-function singleResourceLocator(
-	name: string,
-	displayName: string,
-	searchMethod: string,
-	description: string,
-): INodeProperties {
-	return {
-		displayName,
-		name,
-		default: { mode: 'list', value: '' },
-		description,
-		modes: [
-			{
-				displayName: 'From List',
-				name: 'list',
-				placeholder: `Select a ${displayName}...`,
-				type: 'list',
-				typeOptions: {
-					searchListMethod: searchMethod,
-					searchFilterRequired: false,
-					searchable: true,
-				},
-			},
-			{
-				displayName: 'By ID',
-				name: 'id',
-				placeholder: `Enter ${displayName} ID...`,
-				type: 'string',
-				validation: [
-					{
-						type: 'regex',
-						properties: {
-							regex: '^[1-9][0-9]*$',
-							errorMessage: 'The ID must be a positive integer',
-						},
-					},
-				],
-			},
-		],
-		type: 'resourceLocator',
-	};
+// Accepts a comma-separated string ("3,5"), a single id, or an array of ids,
+// and returns a comma-separated id string for the Paperless query, or undefined.
+function toIdList(value: unknown): string | undefined {
+	if (value === undefined || value === null || value === '') return undefined;
+	const parts = Array.isArray(value) ? value : String(value).split(',');
+	const ids = parts.map((p) => Number(String(p).trim())).filter((n) => !Number.isNaN(n));
+	return ids.length ? ids.join(',') : undefined;
 }
 
 export const description: INodeProperties[] = [
@@ -101,12 +31,13 @@ export const description: INodeProperties[] = [
 		},
 		placeholder: 'Add Filter',
 		options: [
-			singleResourceLocator(
-				'correspondent__id',
-				'Correspondent',
-				'correspondentSearch',
-				'Only documents with this correspondent',
-			),
+			{
+				displayName: 'Correspondent ID',
+				name: 'correspondent__id',
+				default: '',
+				description: 'Only documents with this correspondent (numeric ID)',
+				type: 'number',
+			},
 			{
 				displayName: 'Created After',
 				name: 'created__date__gte',
@@ -121,43 +52,30 @@ export const description: INodeProperties[] = [
 				description: 'Only documents created on or before this date',
 				type: 'dateTime',
 			},
-			singleResourceLocator(
-				'document_type__id',
-				'Document Type',
-				'documentTypeSearch',
-				'Only documents of this type',
-			),
+			{
+				displayName: 'Document Type ID',
+				name: 'document_type__id',
+				default: '',
+				description: 'Only documents of this document type (numeric ID)',
+				type: 'number',
+			},
 			{
 				displayName: 'Has All Tags',
 				name: 'tags__id__all',
-				default: {},
-				description: 'Only documents that have all of these tags',
-				options: [
-					{
-						displayName: 'Tag',
-						name: 'values',
-						values: [tagResourceLocator],
-					},
-				],
-				placeholder: 'Add Tag',
-				type: 'fixedCollection',
-				typeOptions: { multipleValues: true },
+				default: '',
+				description:
+					'Comma-separated tag IDs (e.g. "3,5"). Only documents that have all of these tags.',
+				placeholder: '3,5',
+				type: 'string',
 			},
 			{
 				displayName: 'Has None of Tags',
 				name: 'tags__id__none',
-				default: {},
-				description: 'Exclude documents that have any of these tags',
-				options: [
-					{
-						displayName: 'Tag',
-						name: 'values',
-						values: [tagResourceLocator],
-					},
-				],
-				placeholder: 'Add Tag',
-				type: 'fixedCollection',
-				typeOptions: { multipleValues: true },
+				default: '',
+				description:
+					'Comma-separated tag IDs (e.g. "3,5"). Exclude documents that have any of these tags.',
+				placeholder: '3,5',
+				type: 'string',
 			},
 			{
 				displayName: 'Limit',
@@ -196,12 +114,13 @@ export const description: INodeProperties[] = [
 				description: 'Return documents similar to the document with this ID',
 				type: 'number',
 			},
-			singleResourceLocator(
-				'storage_path__id',
-				'Storage Path',
-				'storagePathSearch',
-				'Only documents with this storage path',
-			),
+			{
+				displayName: 'Storage Path ID',
+				name: 'storage_path__id',
+				default: '',
+				description: 'Only documents with this storage path (numeric ID)',
+				type: 'number',
+			},
 		],
 	},
 ];
@@ -217,22 +136,14 @@ export async function execute(
 	if (filters.query) qs.query = filters.query;
 	if (filters.ordering) qs.ordering = filters.ordering;
 	if (filters.more_like_id) qs.more_like_id = filters.more_like_id;
+	if (filters.correspondent__id) qs.correspondent__id = filters.correspondent__id;
+	if (filters.document_type__id) qs.document_type__id = filters.document_type__id;
+	if (filters.storage_path__id) qs.storage_path__id = filters.storage_path__id;
 
-	const correspondent = (filters.correspondent__id as IDataObject)?.value;
-	if (correspondent) qs.correspondent__id = correspondent;
-	const documentType = (filters.document_type__id as IDataObject)?.value;
-	if (documentType) qs.document_type__id = documentType;
-	const storagePath = (filters.storage_path__id as IDataObject)?.value;
-	if (storagePath) qs.storage_path__id = storagePath;
-
-	const tagsAll = ((filters.tags__id__all as IDataObject)?.values as IDataObject[])
-		?.map((t) => Number((t.tag as IDataObject).value))
-		.filter((id) => !Number.isNaN(id));
-	if (tagsAll?.length) qs.tags__id__all = tagsAll.join(',');
-	const tagsNone = ((filters.tags__id__none as IDataObject)?.values as IDataObject[])
-		?.map((t) => Number((t.tag as IDataObject).value))
-		.filter((id) => !Number.isNaN(id));
-	if (tagsNone?.length) qs.tags__id__none = tagsNone.join(',');
+	const tagsAll = toIdList(filters.tags__id__all);
+	if (tagsAll) qs.tags__id__all = tagsAll;
+	const tagsNone = toIdList(filters.tags__id__none);
+	if (tagsNone) qs.tags__id__none = tagsNone;
 
 	if (filters.created__date__gte)
 		qs.created__date__gte = String(filters.created__date__gte).slice(0, 10);
