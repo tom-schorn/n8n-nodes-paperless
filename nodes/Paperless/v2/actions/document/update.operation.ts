@@ -88,12 +88,13 @@ export const description: INodeProperties[] = [
 		placeholder: 'Add Field',
 		options: [
 			{
-				displayName: 'Append Tags',
-				name: 'append_tags',
-				type: 'boolean',
-				default: false,
+				displayName: 'Add Tags',
+				name: 'add_tags',
+				default: '',
 				description:
-					'Whether to append the new tags to the existing ones instead of replacing them',
+					'Comma-separated tag IDs (e.g. "3,5") to add to the document\'s existing tags',
+				placeholder: '3,5',
+				type: 'string',
 			},
 			{
 				displayName: 'Archive Serial Number',
@@ -189,6 +190,24 @@ export const description: INodeProperties[] = [
 				type: 'resourceLocator',
 			},
 			{
+				displayName: 'Remove Tags',
+				name: 'remove_tags',
+				default: '',
+				description:
+					'Comma-separated tag IDs (e.g. "3,5") to remove from the document\'s existing tags',
+				placeholder: '3,5',
+				type: 'string',
+			},
+			{
+				displayName: 'Set Tags (Replace)',
+				name: 'tags',
+				default: '',
+				description:
+					'Comma-separated tag IDs (e.g. "3,5") that replace the document\'s entire tag set',
+				placeholder: '3,5',
+				type: 'string',
+			},
+			{
 				displayName: 'Storage Path',
 				name: 'storage_path',
 				default: { mode: 'list', value: '' },
@@ -224,15 +243,6 @@ export const description: INodeProperties[] = [
 				type: 'resourceLocator',
 			},
 			{
-				displayName: 'Tags',
-				name: 'tags',
-				default: '',
-				description:
-					'Comma-separated tag IDs (e.g. "3,5"). Replaces the document\'s tags, unless "Append Tags" is enabled.',
-				placeholder: '3,5',
-				type: 'string',
-			},
-			{
 				displayName: 'Title',
 				name: 'title',
 				default: '',
@@ -252,13 +262,30 @@ export async function execute(
 
 	const updateFields = this.getNodeParameter('update_fields', itemIndex, {}) as any;
 
-	const parsedTags = parseIds(updateFields.tags);
-	let tags: number[] | undefined = parsedTags.length ? parsedTags : undefined;
+	// Tags: "Set" replaces the whole set; "Add"/"Remove" modify the current set.
+	const setTags = parseIds(updateFields.tags);
+	const addTags = parseIds(updateFields.add_tags);
+	const removeTags = parseIds(updateFields.remove_tags);
+	const hasSet = setTags.length > 0;
+	const hasAdd = addTags.length > 0;
+	const hasRemove = removeTags.length > 0;
 
-	if (updateFields.append_tags && tags && tags.length > 0) {
-		const currentDocument = (await apiRequest.call(this, itemIndex, 'GET', endpoint)) as any;
-		const currentTags = (currentDocument.tags || []).map((t: any) => Number(t));
-		tags = [...new Set([...currentTags, ...tags])];
+	let tags: number[] | undefined;
+	if (hasSet || hasAdd || hasRemove) {
+		let base: number[];
+		if (hasSet) {
+			base = setTags;
+		} else {
+			// Add/Remove operate on the document's current tags
+			const currentDocument = (await apiRequest.call(this, itemIndex, 'GET', endpoint)) as any;
+			base = (currentDocument.tags || []).map((t: any) => Number(t));
+		}
+		if (hasAdd) base = [...new Set([...base, ...addTags])];
+		if (hasRemove) {
+			const remove = new Set(removeTags);
+			base = base.filter((t) => !remove.has(t));
+		}
+		tags = base;
 	}
 
 	let customFields: any;
