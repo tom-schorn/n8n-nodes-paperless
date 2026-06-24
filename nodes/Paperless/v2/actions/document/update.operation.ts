@@ -3,8 +3,10 @@ import {
 	INodeExecutionData,
 	INodeParameterResourceLocator,
 	INodeProperties,
+	NodeOperationError,
 } from 'n8n-workflow';
 import { apiRequest } from '../../transport';
+import { parseIds } from '../../helpers';
 
 export const description: INodeProperties[] = [
 	{
@@ -143,65 +145,13 @@ export const description: INodeProperties[] = [
 				type: 'dateTime',
 			},
 			{
-				displayName: 'Custom Fields',
+				displayName: 'Custom Fields (JSON)',
 				name: 'custom_fields',
-				default: {},
-				description: 'The custom field of the document',
-				options: [
-					{
-						displayName: 'Custom Field',
-						name: 'values',
-						values: [
-							{
-								displayName: 'Field',
-								name: 'field',
-								default: { mode: 'list', value: '' },
-								description: 'The custom field ID',
-								modes: [
-									{
-										displayName: 'From List',
-										name: 'list',
-										placeholder: `Select a Custom Field...`,
-										type: 'list',
-										typeOptions: {
-											searchListMethod: 'customFieldSearch',
-											searchFilterRequired: false,
-											searchable: true,
-										},
-									},
-									{
-										displayName: 'By ID',
-										name: 'id',
-										placeholder: `Enter Custom Field ID...`,
-										type: 'string',
-										validation: [
-											{
-												type: 'regex',
-												properties: {
-													regex: '^[1-9][0-9]*$',
-													errorMessage: 'The ID must be a positive integer',
-												},
-											},
-										],
-									},
-								],
-								type: 'resourceLocator',
-							},
-							{
-								displayName: 'Value',
-								name: 'value',
-								default: '',
-								description: 'The custom field value',
-								type: 'string',
-							},
-						],
-					},
-				],
-				placeholder: 'Add Custom Field',
-				type: 'fixedCollection',
-				typeOptions: {
-					multipleValues: true,
-				},
+				default: '',
+				description:
+					'Custom fields as a JSON array of objects, each with a field (the custom field ID) and a value. Example: [{"field":1,"value":"2026-01-01"}].',
+				placeholder: '[{"field":1,"value":"…"}]',
+				type: 'json',
 			},
 			{
 				displayName: 'Document Type',
@@ -276,56 +226,11 @@ export const description: INodeProperties[] = [
 			{
 				displayName: 'Tags',
 				name: 'tags',
-				default: {},
-				description: 'The tag IDs of the document',
-				options: [
-					{
-						displayName: 'Tag',
-						name: 'values',
-						values: [
-							{
-								displayName: 'Tag',
-								name: 'tag',
-								default: { mode: 'list', value: '' },
-								description: 'The tag ID',
-								modes: [
-									{
-										displayName: 'From List',
-										name: 'list',
-										placeholder: `Select a Tag...`,
-										type: 'list',
-										typeOptions: {
-											searchListMethod: 'tagSearch',
-											searchFilterRequired: false,
-											searchable: true,
-										},
-									},
-									{
-										displayName: 'By ID',
-										name: 'id',
-										placeholder: `Enter Tag ID...`,
-										type: 'string',
-										validation: [
-											{
-												type: 'regex',
-												properties: {
-													regex: '^[1-9][0-9]*$',
-													errorMessage: 'The ID must be a positive integer',
-												},
-											},
-										],
-									},
-								],
-								type: 'resourceLocator',
-							},
-						],
-					},
-				],
-				placeholder: 'Add Tag',
-				type: 'fixedCollection',
-				typeOptions: {
-					multipleValues: true,
-				},
+				default: '',
+				description:
+					'Comma-separated tag IDs (e.g. "3,5"). Replaces the document\'s tags, unless "Append Tags" is enabled.',
+				placeholder: '3,5',
+				type: 'string',
 			},
 			{
 				displayName: 'Title',
@@ -347,12 +252,8 @@ export async function execute(
 
 	const updateFields = this.getNodeParameter('update_fields', itemIndex, {}) as any;
 
-	let tags: number[] | undefined;
-	if (Array.isArray(updateFields.tags)) {
-		tags = (updateFields.tags as unknown[]).map(Number);
-	} else if (updateFields.tags?.values) {
-		tags = updateFields.tags.values.map((tag: any) => Number(tag.tag.value));
-	}
+	const parsedTags = parseIds(updateFields.tags);
+	let tags: number[] | undefined = parsedTags.length ? parsedTags : undefined;
 
 	if (updateFields.append_tags && tags && tags.length > 0) {
 		const currentDocument = (await apiRequest.call(this, itemIndex, 'GET', endpoint)) as any;
@@ -360,14 +261,27 @@ export async function execute(
 		tags = [...new Set([...currentTags, ...tags])];
 	}
 
+	let customFields: any;
+	if (updateFields.custom_fields !== undefined && updateFields.custom_fields !== '') {
+		try {
+			customFields =
+				typeof updateFields.custom_fields === 'string'
+					? JSON.parse(updateFields.custom_fields)
+					: updateFields.custom_fields;
+		} catch {
+			throw new NodeOperationError(
+				this.getNode(),
+				'Custom Fields must be valid JSON, e.g. [{"field":1,"value":"…"}]',
+				{ itemIndex },
+			);
+		}
+	}
+
 	const body = {
 		archive_serial_number: updateFields.archive_serial_number,
 		correspondent: updateFields.correspondent?.value,
 		created: updateFields.created,
-		custom_fields: updateFields.custom_fields?.values.map((customField: any) => ({
-			field: customField.field.value,
-			value: customField.value,
-		})),
+		custom_fields: customFields,
 		document_type: updateFields.document_type?.value,
 		storage_path: updateFields.storage_path?.value,
 		tags,

@@ -6,15 +6,7 @@ import {
 	NodeOperationError,
 } from 'n8n-workflow';
 import { apiRequest, apiRequestPaginated } from '../../transport';
-
-// Accepts a comma-separated string ("3,5"), a single id, or an array of ids,
-// and returns a comma-separated id string for the Paperless query, or undefined.
-function toIdList(value: unknown): string | undefined {
-	if (value === undefined || value === null || value === '') return undefined;
-	const parts = Array.isArray(value) ? value : String(value).split(',');
-	const ids = parts.map((p) => Number(String(p).trim())).filter((n) => !Number.isNaN(n));
-	return ids.length ? ids.join(',') : undefined;
-}
+import { parseIds } from '../../helpers';
 
 export const description: INodeProperties[] = [
 	{
@@ -140,10 +132,10 @@ export async function execute(
 	if (filters.document_type__id) qs.document_type__id = filters.document_type__id;
 	if (filters.storage_path__id) qs.storage_path__id = filters.storage_path__id;
 
-	const tagsAll = toIdList(filters.tags__id__all);
-	if (tagsAll) qs.tags__id__all = tagsAll;
-	const tagsNone = toIdList(filters.tags__id__none);
-	if (tagsNone) qs.tags__id__none = tagsNone;
+	const tagsAll = parseIds(filters.tags__id__all);
+	if (tagsAll.length) qs.tags__id__all = tagsAll.join(',');
+	const tagsNone = parseIds(filters.tags__id__none);
+	if (tagsNone.length) qs.tags__id__none = tagsNone.join(',');
 
 	if (filters.created__date__gte)
 		qs.created__date__gte = String(filters.created__date__gte).slice(0, 10);
